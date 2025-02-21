@@ -8,6 +8,8 @@ const path = require('path')
 const API_KEY = process.env.API_KEY
 const API_ENDPOINT = process.env.API_ENDPOINT
 
+console.log('API_ENDPOINT: ', API_ENDPOINT)
+
 // 添加 MIME 类型映射
 const MIME_TYPES = {
   '.html': 'text/html',
