@@ -8,8 +8,6 @@ const path = require('path')
 const API_KEY = process.env.API_KEY
 const API_ENDPOINT = process.env.API_ENDPOINT
 
-console.log('API_ENDPOINT: ', API_ENDPOINT)
-
 // 添加 MIME 类型映射
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -52,108 +50,112 @@ const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/generate-names') {
     let body = ''
 
-    req.on('data', (chunk) => {
-      body += chunk.toString()
-    })
+    // 临时调试信息
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ info: API_ENDPOINT }))
 
-    req.on('end', () => {
-      const { englishName } = JSON.parse(body)
+    // req.on('data', (chunk) => {
+    //   body += chunk.toString()
+    // })
 
-      const prompt = `作为一个专业的中文起名专家，请为英文名"${englishName}"生成3个富有中国文化特色的中文名。
-            每个名字都应该包含以下信息：
-            1. 中文名
-            2. 中文含义解释
-            3. 英文含义解释
-            请用JSON格式返回，格式如下：
-            {
-                "names": [
-                    {
-                        "chinese": "中文名",
-                        "chineseMeaning": "中文含义",
-                        "englishMeaning": "英文含义"
-                    }
-                ]
-            }`
+    // req.on('end', () => {
+    //   const { englishName } = JSON.parse(body)
 
-      const requestData = JSON.stringify({
-        model: 'deepseek-r1-250120',
-        messages: [
-          { role: 'system', content: '你是一个专业的中文起名专家。' },
-          { role: 'user', content: prompt }
-        ]
-      })
+    //   const prompt = `作为一个专业的中文起名专家，请为英文名"${englishName}"生成3个富有中国文化特色的中文名。
+    //         每个名字都应该包含以下信息：
+    //         1. 中文名
+    //         2. 中文含义解释
+    //         3. 英文含义解释
+    //         请用JSON格式返回，格式如下：
+    //         {
+    //             "names": [
+    //                 {
+    //                     "chinese": "中文名",
+    //                     "chineseMeaning": "中文含义",
+    //                     "englishMeaning": "英文含义"
+    //                 }
+    //             ]
+    //         }`
 
-      const options = {
-        hostname: API_ENDPOINT,
-        path: '/api/v3/chat/completions',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${API_KEY}`
-        },
-        timeout: 60000 // 60秒超时
-      }
+    //   const requestData = JSON.stringify({
+    //     model: 'deepseek-r1-250120',
+    //     messages: [
+    //       { role: 'system', content: '你是一个专业的中文起名专家。' },
+    //       { role: 'user', content: prompt }
+    //     ]
+    //   })
 
-      const apiReq = https.request(options, (apiRes) => {
-        let data = ''
+    //   const options = {
+    //     hostname: API_ENDPOINT,
+    //     path: '/api/v3/chat/completions',
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       Authorization: `Bearer ${API_KEY}`
+    //     },
+    //     timeout: 60000 // 60秒超时
+    //   }
 
-        apiRes.on('data', (chunk) => {
-          data += chunk
-        })
+    //   const apiReq = https.request(options, (apiRes) => {
+    //     let data = ''
 
-        apiRes.on('end', () => {
-          try {
-            const response = JSON.parse(data)
+    //     apiRes.on('data', (chunk) => {
+    //       data += chunk
+    //     })
 
-            if (response.error) {
-              res.writeHead(500, { 'Content-Type': 'application/json' })
-              res.end(
-                JSON.stringify({ error: response.error.message || 'API Error' })
-              )
-              return
-            }
+    //     apiRes.on('end', () => {
+    //       try {
+    //         const response = JSON.parse(data)
 
-            let content = response.choices[0].message.content
-            const jsonStart = content.indexOf('{')
-            const jsonEnd = content.lastIndexOf('}') + 1
+    //         if (response.error) {
+    //           res.writeHead(500, { 'Content-Type': 'application/json' })
+    //           res.end(
+    //             JSON.stringify({ error: response.error.message || 'API Error' })
+    //           )
+    //           return
+    //         }
 
-            if (jsonStart === -1 || jsonEnd === 0) {
-              throw new Error('No valid JSON found in response')
-            }
+    //         let content = response.choices[0].message.content
+    //         const jsonStart = content.indexOf('{')
+    //         const jsonEnd = content.lastIndexOf('}') + 1
 
-            content = content.slice(jsonStart, jsonEnd)
-            const names = JSON.parse(content)
+    //         if (jsonStart === -1 || jsonEnd === 0) {
+    //           throw new Error('No valid JSON found in response')
+    //         }
 
-            res.writeHead(200, { 'Content-Type': 'application/json' })
-            res.end(JSON.stringify(names))
-          } catch (error) {
-            res.writeHead(500, { 'Content-Type': 'application/json' })
-            res.end(
-              JSON.stringify({
-                error: `Failed to process API response: ${error.message}`
-              })
-            )
-          }
-        })
-      })
+    //         content = content.slice(jsonStart, jsonEnd)
+    //         const names = JSON.parse(content)
 
-      apiReq.on('error', (error) => {
-        console.error('Request error:', error) // 打印请求错误
-        res.writeHead(500, { 'Content-Type': 'application/json' })
-        res.end(
-          JSON.stringify({ error: `Failed to call API: ${error.message}` })
-        )
-      })
+    //         res.writeHead(200, { 'Content-Type': 'application/json' })
+    //         res.end(JSON.stringify(names))
+    //       } catch (error) {
+    //         res.writeHead(500, { 'Content-Type': 'application/json' })
+    //         res.end(
+    //           JSON.stringify({
+    //             error: `Failed to process API response: ${error.message}`
+    //           })
+    //         )
+    //       }
+    //     })
+    //   })
 
-      apiReq.on('timeout', () => {
-        apiReq.destroy()
-        res.writeHead(504, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: 'Request timeout' }))
-      })
+    //   apiReq.on('error', (error) => {
+    //     console.error('Request error:', error) // 打印请求错误
+    //     res.writeHead(500, { 'Content-Type': 'application/json' })
+    //     res.end(
+    //       JSON.stringify({ error: `Failed to call API: ${error.message}` })
+    //     )
+    //   })
 
-      apiReq.write(requestData)
-      apiReq.end()
-    })
+    //   apiReq.on('timeout', () => {
+    //     apiReq.destroy()
+    //     res.writeHead(504, { 'Content-Type': 'application/json' })
+    //     res.end(JSON.stringify({ error: 'Request timeout' }))
+    //   })
+
+    //   apiReq.write(requestData)
+    //   apiReq.end()
+    // })
   } else {
     res.writeHead(404)
     res.end()
